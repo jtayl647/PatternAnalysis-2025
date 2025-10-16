@@ -3,7 +3,6 @@
 import os
 import numpy as np
 import nibabel as nib
-from tqdm import tqdm
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
@@ -42,7 +41,7 @@ def load_data_2D (imageNames, normImage = False, categorical = False, dtype = np
         rows, cols = first_case.shape
         images = np.zeros ((num, rows, cols) , dtype = dtype)
 
-    for i, inName in enumerate (tqdm(imageNames)):
+    for i, inName in enumerate (imageNames):
         niftiImage = nib.load(inName)
         inImage = niftiImage.get_fdata(caching = 'unchanged') # read disk only
         affine = niftiImage.affine
@@ -56,7 +55,6 @@ def load_data_2D (imageNames, normImage = False, categorical = False, dtype = np
 
         # Skip image if shape doesn't match first_case
         if inImage.shape[:2] != first_case.shape:
-            print(f"\nSkipping image {i+1}/{num}: shape {inImage.shape}, expected {ref_shape}")
             continue  # move to next image
 
         if categorical:
@@ -97,5 +95,11 @@ def load_our_data(base_path, normImage=False, batch_size=32):
     train_loader = DataLoader(TensorDataset(X_train_t, X_train_t), batch_size=batch_size, shuffle=True)
     val_loader   = DataLoader(TensorDataset(X_val_t, X_val_t), batch_size=batch_size, shuffle=False)
     test_loader  = DataLoader(TensorDataset(X_test_t, X_test_t), batch_size=batch_size, shuffle=False)
+
+    # Print summary of shapes
+    print("All tensors loaded successfully!")
+    print(f"Train tensor shape: {X_train_t.shape}")
+    print(f"Validation tensor shape: {X_val_t.shape}")
+    print(f"Test tensor shape: {X_test_t.shape}")
 
     return train_loader, val_loader, test_loader, X_train_t
