@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from modules import VQVAE, VQVAE2
+from modules import VQVAE2
 from dataset import load_our_data
 from torchmetrics.functional import structural_similarity_index_measure as ssim_fn
 
@@ -80,7 +80,7 @@ def test(model, loader):
 def main():
     base_path = "/home/groups/comp3710/HipMRI_Study_open/keras_slices_data"
     batch_size = 32
-    epochs = 25
+    epochs = 10
     learning_rate = 1e-4
 
     train_loader, val_loader, test_loader, _ = load_our_data(base_path, batch_size=batch_size, normImage=False)

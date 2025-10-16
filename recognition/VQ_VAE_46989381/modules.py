@@ -2,6 +2,20 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# ---------------------- Residual Block ----------------------
+class ResidualBlock(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)
+        self.in1 = nn.InstanceNorm2d(channels)
+        self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)
+        self.in2 = nn.InstanceNorm2d(channels)
+
+    def forward(self, x):
+        out = F.relu(self.in1(self.conv1(x)))
+        out = self.in2(self.conv2(out))
+        return F.relu(out + x)
+
 # ---------------------- Encoder ----------------------
 class Encoder(nn.Module):
     def __init__(self, in_channels=1, latent_dim=128, dropout=0.1):
@@ -13,10 +27,12 @@ class Encoder(nn.Module):
         self.conv2 = nn.Conv2d(64, 128, 4, stride=2, padding=1)
         self.in2 = nn.InstanceNorm2d(128)
         self.drop2 = nn.Dropout2d(dropout)
+        self.res1 = ResidualBlock(128)
 
         self.conv3 = nn.Conv2d(128, 256, 4, stride=2, padding=1)
         self.in3 = nn.InstanceNorm2d(256)
         self.drop3 = nn.Dropout2d(dropout)
+        self.res2 = ResidualBlock(256)
 
         self.conv4 = nn.Conv2d(256, latent_dim, 1, stride=1)
 
@@ -25,8 +41,10 @@ class Encoder(nn.Module):
         x = self.drop1(x)
         x = F.relu(self.in2(self.conv2(x)))
         x = self.drop2(x)
+        x = self.res1(x)
         x = F.relu(self.in3(self.conv3(x)))
         x = self.drop3(x)
+        x = self.res2(x)
         x = self.conv4(x)
         return x
 
@@ -37,24 +55,34 @@ class Decoder(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(latent_dim, 256, 4, stride=2, padding=1)
         self.in1 = nn.InstanceNorm2d(256)
         self.drop1 = nn.Dropout2d(dropout)
+        self.res1 = ResidualBlock(256)
 
         self.deconv2 = nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1)
         self.in2 = nn.InstanceNorm2d(128)
         self.drop2 = nn.Dropout2d(dropout)
+        self.res2 = ResidualBlock(128)
 
         self.deconv3 = nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1)
         self.in3 = nn.InstanceNorm2d(64)
         self.drop3 = nn.Dropout2d(dropout)
+
+        self.refine = nn.Conv2d(64, 64, 3, padding=1)
+        self.in_refine = nn.InstanceNorm2d(64)
+        self.drop_refine = nn.Dropout2d(dropout)
 
         self.out_conv = nn.Conv2d(64, output_channels, 1)
 
     def forward(self, z):
         x = F.relu(self.in1(self.deconv1(z)))
         x = self.drop1(x)
+        x = self.res1(x)
         x = F.relu(self.in2(self.deconv2(x)))
         x = self.drop2(x)
+        x = self.res2(x)
         x = F.relu(self.in3(self.deconv3(x)))
         x = self.drop3(x)
+        x = F.relu(self.in_refine(self.refine(x)))
+        x = self.drop_refine(x)
         x = torch.sigmoid(self.out_conv(x))
         return x
 
@@ -89,28 +117,14 @@ class VectorQuantizer(nn.Module):
         quantized = inputs + (quantized - inputs).detach()
         return quantized, loss, encoding_indices
 
-# ---------------------- VQ-VAE ----------------------
-class VQVAE(nn.Module):
-    def __init__(self, latent_dim=128, num_embeddings=512, commitment_cost=0.25, output_channels=1):
-        super().__init__()
-        self.encoder = Encoder(in_channels=1, latent_dim=latent_dim)
-        self.quantizer = VectorQuantizer(num_embeddings, latent_dim, commitment_cost)
-        self.decoder = Decoder(latent_dim=latent_dim, output_channels=output_channels)
-
-    def forward(self, x):
-        z_e = self.encoder(x)
-        z_q, vq_loss, _ = self.quantizer(z_e)
-        x_recon = self.decoder(z_q)
-        return x_recon, vq_loss
-
-# ---------------------- VQ-VAE-2 ----------------------
+# ---------------------- Improved VQ-VAE-2 ----------------------
 class VQVAE2(nn.Module):
     def __init__(self, latent_dim=128, num_embeddings=512, commitment_cost=0.25, output_channels=1):
         super().__init__()
         # Bottom-level encoder
         self.encoder_b = Encoder(in_channels=1, latent_dim=latent_dim)
         
-        # Top-level encoder (takes latent_dim channels from bottom)
+        # Top-level encoder
         self.encoder_t = nn.Sequential(
             nn.AvgPool2d(2),
             Encoder(in_channels=latent_dim, latent_dim=latent_dim)
@@ -119,6 +133,9 @@ class VQVAE2(nn.Module):
         # Vector quantizers
         self.vq_top = VectorQuantizer(num_embeddings, embedding_dim=latent_dim, commitment_cost=commitment_cost)
         self.vq_bottom = VectorQuantizer(num_embeddings, embedding_dim=latent_dim*2, commitment_cost=commitment_cost)
+
+        # Residual after concatenation
+        self.res_after_concat = ResidualBlock(latent_dim*2)
 
         # Decoder
         self.decoder = Decoder(latent_dim=latent_dim*2, output_channels=output_channels)
@@ -130,14 +147,15 @@ class VQVAE2(nn.Module):
         # Top latent
         z_t = self.encoder_t(z_b)
         
-        # Quantization
+        # Top quantization
         z_t_q, vq_loss_t, _ = self.vq_top(z_t)
         
-        # Upsample top latent to bottom latent size
+        # Upsample top latent
         z_t_q_up = F.interpolate(z_t_q, size=z_b.shape[-2:], mode='nearest')
         
-        # Combine bottom latent with upsampled top latent
+        # Combine bottom latent with top latent
         z_b_combined = torch.cat([z_b, z_t_q_up], dim=1)
+        z_b_combined = self.res_after_concat(z_b_combined)
         
         # Bottom quantization
         z_b_q, vq_loss_b, _ = self.vq_bottom(z_b_combined)
