@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from modules import VQVAE
+from modules import VQVAE, VQVAE2
 from dataset import load_our_data
 from torchmetrics.functional import structural_similarity_index_measure as ssim_fn
 
@@ -85,7 +85,7 @@ def main():
 
     train_loader, val_loader, test_loader, _ = load_our_data(base_path, batch_size=batch_size, normImage=False)
 
-    model = VQVAE(latent_dim=128, num_embeddings=512, commitment_cost=0.25, output_channels=1).to(device)
+    model = VQVAE2(latent_dim=256, num_embeddings=1024, commitment_cost=0.25, output_channels=1).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     train_losses, val_losses, val_ssims = [], [], []
