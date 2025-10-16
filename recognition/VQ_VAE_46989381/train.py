@@ -80,19 +80,13 @@ def test(model, loader):
 def main():
     base_path = "/home/groups/comp3710/HipMRI_Study_open/keras_slices_data"
     batch_size = 32
-    epochs = 5
+    epochs = 25
     learning_rate = 1e-4
 
     train_loader, val_loader, test_loader, _ = load_our_data(base_path, batch_size=batch_size, normImage=False)
 
-    model = VQVAE(latent_dim=64, num_embeddings=512, commitment_cost=0.25, output_channels=1).to(device)
+    model = VQVAE(latent_dim=128, num_embeddings=512, commitment_cost=0.25, output_channels=1).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    # Optionally load a pre-trained model
-    saved_model_path = "savedmodel.pth"
-    if os.path.exists(saved_model_path):
-        model.load_state_dict(torch.load(saved_model_path, map_location=device))
-        print(f"Loaded model from {saved_model_path}")
 
     train_losses, val_losses, val_ssims = [], [], []
 
@@ -105,9 +99,6 @@ def main():
         val_ssims.append(val_ssim)
 
         print(f"Epoch {epoch}/{epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val SSIM: {val_ssim:.3f}")
-
-        # Save checkpoint every epoch
-        torch.save(model.state_dict(), saved_model_path)
 
     # Final evaluation
     test_ssim = test(model, test_loader)
