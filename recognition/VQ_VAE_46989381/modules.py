@@ -117,7 +117,7 @@ class VectorQuantizer(nn.Module):
         quantized = inputs + (quantized - inputs).detach()
         return quantized, loss, encoding_indices
 
-# ---------------------- Improved VQ-VAE-2 ----------------------
+# ------------------------ VQVAE2 ------------------------
 class VQVAE2(nn.Module):
     def __init__(self, latent_dim=128, num_embeddings=512, commitment_cost=0.25, output_channels=1):
         super().__init__()
