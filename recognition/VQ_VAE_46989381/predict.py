@@ -6,7 +6,7 @@ from dataset import load_our_data
 
 # ---------------------- Configuration ----------------------
 BASE_PATH = "/home/groups/comp3710/HipMRI_Study_open/keras_slices_data"
-MODEL_PATH = "train_dir/vqvae_hipmri_final.pth"
+MODEL_PATH = "train_dir/vqvae_model.pth"
 SAVE_DIR = "predict_dir"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
