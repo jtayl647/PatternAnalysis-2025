@@ -1,3 +1,6 @@
+# Jaimee Taylor
+Student: 46989381 | Email: s4698938@uq.edu.au 
+
 # HipMRI — Prostate Cancer Generative Model (VQVAE2)
 **Generative modelling of HipMRI prostate-cancer 2D slices using VQ-VAE**
 
@@ -5,6 +8,24 @@
 
 ## Motivation
 Medical imaging datasets, such as prostate MRI scans, are often limited in size and diversity due to patient privacy concerns, acquisition costs, and labeling complexity. This scarcity makes it difficult to train robust deep learning models for diagnosis or segmentation. Generative models like VQ-VAE-2 offer a solution by learning compact and meaningful latent representations of MRI data, enabling the generation of realistic synthetic images and high-quality reconstructions. Such models can enhance dataset diversity, support data augmentation, and improve the understanding of structural patterns associated with prostate cancer.
+
+## Data Processing
+
+All data preparation methods are implemented in the **`dataset.py`** file.
+
+The dataset used in this project comes from the **HipMRI Study** for prostate cancer radiotherapy and consists of prostate 2D MRI slice data stored under the folder **`keras_slices_data/`**.
+
+The HipMRI dataset contains grayscale 2D MRI images of the pelvis, primarily sized at **256×128 pixels**.  
+Any images not matching this resolution in the original dataset were excluded during preprocessing.
+
+**Dataset Split:**
+- **Training Set:** 11,460 images  
+- **Validation Set:** 660 images  
+- **Test Set:** 540 images
+
+## Data Pipeling
+
+The data pipeline used Nibabel to load 2D MRI slices from NIfTI files, followed by NumPy-based preprocessing to normalise intensity values and filter out incorrectly sized images. Each slice was standardised using z-score normalisation and reshaped into a consistent 256×128 format. The processed images were then converted into PyTorch tensors, with a channel dimension added to fit convolutional input requirements. Finally, PyTorch DataLoaders were used to batch, shuffle, and efficiently feed data into the model for training, validation, and testing.
 
 ## Algorithm Description
 A VQ-VAE is a variational autoencoder–style model that uses a discrete codebook to represent the latent space [2]. This allows it to achieve GAN-like realism while maintaining the stable, monotonic convergence of a VAE, avoiding the instability of adversarial training. VQ-VAE-2 extends this approach with a hierarchical latent structure to capture both global and fine-grained image features [1].
