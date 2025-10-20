@@ -110,10 +110,10 @@ After training, a new folder named **`train_dir`** will be created. This directo
 
 ### Training Results
 
-![Loss vs Epoch](losses.png)  
+![Loss vs Epoch](images/losses.png)  
 *Figure 2: Training Loss vs Epoch*
 
-![SSIM vs Epoch](ssim.png)  
+![SSIM vs Epoch](images/ssim.png)  
 *Figure 3: Validation SSIM vs Epoch*
 
 Now that the model has been trained, we can demonstrate an example using **`predict.py`**.  
@@ -123,7 +123,7 @@ After running the prediction script, a new folder named **`predict_dir`** will b
 
 ### Prediction Example
 
-![Original vs Reconstructed](reconstruction.png)  
+![Original vs Reconstructed](images/reconstruction.png)  
 *Figure 4: Original vs Reconstructed*
 
 
