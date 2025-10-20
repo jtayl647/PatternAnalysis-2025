@@ -12,11 +12,109 @@ A VQ-VAE is a variational autoencoder–style model that uses a discrete codeboo
 The VQ-VAE-2 model consists of a hierarchical encoder–decoder structure with two levels of latent representations. The **bottom encoder** extracts fine-grained features, while the **top encoder**, applied after downsampling, captures global features. Both latents are discretized using **vector quantizers**: the top quantizer processes the top-level latent, and the bottom quantizer processes a combination of the bottom-level latent and the upsampled top-level latent. The **decoder** then reconstructs the image from the quantized latent using transposed convolutions, residual blocks, instance normalization, and dropout. Residual connections and instance normalization throughout the network help maintain stable training and preserve high-quality feature representations.
 
 ![VQ-VAE2 Model](images/vqvae2_blocks.png)
-*Figure: Overview of the VQ-VAE-2 hierarchical architecture, showing the bottom and top encoders, vector quantizers, and decoder [1].*
+*Figure 1: Overview of the VQ-VAE-2 hierarchical architecture, showing the bottom and top encoders, vector quantizers, and decoder [1].*
 
-## Dependencies
-It should also list any dependencies required, including versions and address reproduciblility of results,
-if applicable.
+
+## Dependencies and Setup
+
+This project requires **Python 3.8+** and several libraries for deep learning, data processing, and visualization. To ensure reproducibility, it is recommended to use a **Conda environment**.
+
+### Setting Up
+
+We’ll begin by creating a Conda environment. This can be done either **locally** or on **Rangpur**, depending on which GPU you plan to use.  
+> **Note:** Accessing Rangpur requires a UQ VPN connection. You can use *Cisco Secure Client* to connect.
+
+**Conda Environment Setup:**
+```bash
+# Create and activate the environment
+conda create -n hipmri python=3.9
+conda activate hipmri
+
+# Install PyTorch with GPU support
+conda install pytorch==2.2.0 torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+
+# Install additional dependencies
+pip install matplotlib==3.8.0
+pip install numpy==1.26.0
+pip install nibabel==5.0.1
+pip install torchmetrics==0.11.4
+```
+
+We will then create a SLURM file.
+*train.sh:*
+```bash
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --gres=gpu:1
+#SBATCH --partition=a100
+#SBATCH --job-name=vq_vae
+#SBATCH -o train.out 
+#SBATCH --time=10:00:00
+conda activate hipmri # Change this to your environrmrnt name.
+python train.py
+```
+### Running Jobs
+
+Using this file we can then submit a job to the desired gpu.
+*Submitting a Job:*
+```bash
+sbatch train.sh
+```
+
+Once you see the train.out file in your directory, the job has completed.
+Alternatively, you can check progress with:
+```bash
+squeue -u your_student_username
+```
+
+> **Note:** The predict.py script is run in a similar way — simply replace the .py and .out filenames as desired.
+
+### Moving Files
+
+To transfer files between your local machine and Rangpur, you can use **FileZilla** or the command line tool **scp**.
+
+I used *FileZilla* for convenience — it allows easy drag-and-drop transfers and saves your connection details, so you don’t need to log in each time.  
+
+You can also use *scp*, but note that it requires authentication every time you transfer files.
+
+> **Recommendation:** Use *FileZilla* for a smoother workflow when frequently moving files to and from Rangpur.
+
+
+## Results
+Following the steps above or running the file locally, you should obtain similar results after training the model. 
+
+Your *train.out* file should look like this: 
+```bash
+All tensors loaded successfully!
+Train tensor shape: torch.Size([11460, 1, 256, 128])
+Validation tensor shape: torch.Size([660, 1, 256, 128])
+Test tensor shape: torch.Size([540, 1, 256, 128])
+Epoch 1/80 | Train Loss: 1.1632 | Val Loss: 0.0301 | Val SSIM: 0.415
+Epoch 2/80 | Train Loss: 0.8039 | Val Loss: 0.0284 | Val SSIM: 0.454
+Epoch 3/80 | Train Loss: 0.7031 | Val Loss: 0.0246 | Val SSIM: 0.471
+...
+Epoch 77/80 | Train Loss: 0.0529 | Val Loss: 0.0174 | Val SSIM: 0.593
+Epoch 78/80 | Train Loss: 0.0527 | Val Loss: 0.0177 | Val SSIM: 0.595
+Epoch 79/80 | Train Loss: 0.0532 | Val Loss: 0.0165 | Val SSIM: 0.596
+Epoch 80/80 | Train Loss: 0.0525 | Val Loss: 0.0165 | Val SSIM: 0.595
+Test SSIM: 0.624
+```
+
+As shown above, the model achieved a **Structural Similarity Index (SSIM) greater than 0.6**.  
+
+After training, a new folder named **`train_dir`** will be created. This directory contains:  
+- The trained model file: **`vqvae_model.pth`**  
+- A **`plots/`** folder with visualizations generated during training (e.g., loss and SSIM curves).  
+
+### Training Results
+
+![Loss vs Epoch](losses.png)  
+*Figure 2: Training Loss vs Epoch*
+
+![SSIM vs Epoch](ssim.png)  
+*Figure 3: Validation SSIM vs Epoch*
 
 
 ## References
