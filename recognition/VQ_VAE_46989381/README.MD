@@ -55,7 +55,11 @@ Residual blocks are used throughout the encoder and decoder to **improve gradien
 
 ## Training
 
-The VQ-VAE-2 model is trained for 80 epochs using the Adam optimizer, with a combined reconstruction (MSE) and vector quantization loss. During training, validation loss and SSIM are monitored each epoch to track reconstruction quality, and the final trained model along with loss and SSIM plots are saved in the train_dir folder.
+The VQ-VAE-2 model is trained for *80 epochs* using the Adam optimizer, optimizing a combination of reconstruction (MSE) and vector quantization losses. Validation loss and SSIM are monitored at each epoch to track reconstruction quality, and the final trained model, along with loss and SSIM plots, are saved in the train_dir folder.
+
+A *learning rate* of 1e-4 was selected after testing 1e-3 and 1e-5, as it provided the best balance between convergence speed and stability. The *commitment cost* was set to 0.25 based on literature recommendations and empirical tuning.
+
+The model uses a *latent dimension* of 256, chosen to balance reconstruction fidelity with model complexity—large enough to capture structural details from the MRI slices while remaining efficient in memory and computation.
 
 
 ## Dependencies and Setup

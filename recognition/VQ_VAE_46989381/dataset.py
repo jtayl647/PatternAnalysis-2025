@@ -55,8 +55,8 @@ def load_data_2D (imageNames, normImage = False, categorical = False, dtype = np
             inImage = inImage [:,:,0] # sometimes extra dims in HipMRI_study data
         inImage = inImage.astype(dtype)
         if normImage:
-            # ~ inImage = inImage / np . linalg . norm ( inImage )
-            # ~ inImage = 255. * inImage / inImage . max ()
+            # ~ inImage = inImage/np.linalg.norm(inImage)
+            # ~ inImage = 255.*inImage/inImage.max()
             inImage = (inImage - inImage.mean())/inImage.std()
         # Skip image if shape doesn't match first_case
         if inImage.shape[:2] != first_case.shape:
