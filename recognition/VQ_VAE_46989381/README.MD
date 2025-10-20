@@ -36,9 +36,19 @@ The VQ-VAE-2 model consists of a hierarchical encoder–decoder structure with t
 *Figure 1: Overview of the VQ-VAE-2 hierarchical architecture, showing the bottom and top encoders, vector quantizers, and decoder [1].*
 
 
+## Training
+
+The VQ-VAE-2 model is trained for 80 epochs using the Adam optimizer, with a combined reconstruction (MSE) and vector quantization loss. During training, validation loss and SSIM are monitored each epoch to track reconstruction quality, and the final trained model along with loss and SSIM plots are saved in the train_dir folder.
+
+
 ## Dependencies and Setup
 
 This project requires **Python 3.8+** and several libraries for deep learning, data processing, and visualization. To ensure reproducibility, it is recommended to use a **Conda environment**.
+
+### Copying the Repository
+
+If you want to **make changes** to the code, you should **fork** the repository first and then **clone your fork**.  
+If you only want to **use the model**, you can simply **clone the repository** directly without forking.
 
 ### Setting Up
 
