@@ -6,6 +6,17 @@ from torch.utils.data import TensorDataset, DataLoader
 
 # ---------------------- Utilities ----------------------
 def to_channels(arr:np.ndarray , dtype = np.uint8 ) -> np.ndarray :
+    """
+    Convert a 2D array of categorical labels into a one-hot encoded array along the channel dimension.
+
+    Args:
+        arr (np.ndarray): Input 2D array containing categorical labels.
+        dtype (data-type, optional): Desired data type of the output array. Defaults to np.uint8.
+
+    Returns:
+        np.ndarray: 3D array with shape (height, width, num_channels), where each channel is a binary mask 
+                    corresponding to one unique label in the input.
+    """
     channels = np.unique(arr)
     res = np.zeros (arr.shape + (len(channels),), dtype = dtype)
     for c in channels :
@@ -65,6 +76,21 @@ def load_data_2D (imageNames, normImage = False, categorical = False, dtype = np
 
 # ---------------------- Loading ----------------------
 def load_our_data(base_path, normImage=False, batch_size=32):
+    """
+    Load the HipMRI dataset and return PyTorch DataLoaders for training, validation, and testing.
+
+    Args:
+        base_path (str): Path to the dataset directory containing 'keras_slices_train', 'keras_slices_validate',
+                         and 'keras_slices_test' folders.
+        normImage (bool, optional): If True, normalize image intensities using z-score. Defaults to False.
+        batch_size (int, optional): Batch size for the DataLoaders. Defaults to 32.
+
+    Returns:
+        tuple: A tuple containing three PyTorch DataLoaders:
+            - train_loader: DataLoader for training data
+            - val_loader: DataLoader for validation data
+            - test_loader: DataLoader for test data
+    """
     train_path = os.path.join(base_path, "keras_slices_train")
     val_path   = os.path.join(base_path, "keras_slices_validate")
     test_path  = os.path.join(base_path, "keras_slices_test")

@@ -36,6 +36,23 @@ The VQ-VAE-2 model consists of a hierarchical encoder–decoder structure with t
 *Figure 1: Overview of the VQ-VAE-2 hierarchical architecture, showing the bottom and top encoders, vector quantizers, and decoder [1].*
 
 
+## Model Architecture
+
+The VQ-VAE-2 model consists of three main components:
+
+1. **Encoder:**  
+   The encoder maps the input MRI slices into a lower-dimensional latent representation. It progressively downsamples the input using convolutional layers while preserving important structural information.
+
+2. **Vector Quantization (VQ) Block:**  
+   The latent representations from the encoder are discretized using a **codebook of embeddings**. This quantization step forces the model to learn a discrete set of latent features, which improves generative quality and helps with compression.
+
+3. **Decoder:**  
+   The decoder reconstructs the MRI slices from the quantized latent representations, using transposed convolutions to upsample back to the original resolution.
+
+### Residual Blocks
+Residual blocks are used throughout the encoder and decoder to **improve gradient flow and stabilise training**. They allow the model to learn identity mappings more easily, which helps in training deeper networks without degradation and improves reconstruction quality.
+
+
 ## Training
 
 The VQ-VAE-2 model is trained for 80 epochs using the Adam optimizer, with a combined reconstruction (MSE) and vector quantization loss. During training, validation loss and SSIM are monitored each epoch to track reconstruction quality, and the final trained model along with loss and SSIM plots are saved in the train_dir folder.

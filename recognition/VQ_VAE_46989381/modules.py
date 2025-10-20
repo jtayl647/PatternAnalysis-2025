@@ -4,6 +4,15 @@ import torch.nn.functional as F
 
 # ---------------------- Residual Block ----------------------
 class ResidualBlock(nn.Module):
+    """
+    A residual block with two convolutional layers and instance normalization.
+
+    Args:
+        channels (int): Number of input and output channels.
+    
+    Returns:
+        Tensor: Output of the residual block after applying skip connection and ReLU activation.
+    """
     def __init__(self, channels):
         super().__init__()
         self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)
@@ -18,6 +27,17 @@ class ResidualBlock(nn.Module):
 
 # ---------------------- Encoder ----------------------
 class Encoder(nn.Module):
+    """
+    Encoder module that downsamples input images into a latent representation.
+
+    Args:
+        in_channels (int): Number of input channels (default: 1).
+        latent_dim (int): Number of output latent channels.
+        dropout (float): Dropout rate for regularization.
+    
+    Returns:
+        Tensor: Latent representation of the input.
+    """
     def __init__(self, in_channels=1, latent_dim=128, dropout=0.1):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, 64, 4, stride=2, padding=1)
@@ -50,6 +70,17 @@ class Encoder(nn.Module):
 
 # ---------------------- Decoder ----------------------
 class Decoder(nn.Module):
+    """
+    Decoder module that reconstructs images from latent representations.
+
+    Args:
+        latent_dim (int): Number of input latent channels.
+        output_channels (int): Number of output channels (default: 1 for grayscale).
+        dropout (float): Dropout rate for regularization.
+    
+    Returns:
+        Tensor: Reconstructed image in the range [0, 1].
+    """
     def __init__(self, latent_dim=128, output_channels=1, dropout=0.1):
         super().__init__()
         self.deconv1 = nn.ConvTranspose2d(latent_dim, 256, 4, stride=2, padding=1)
@@ -88,6 +119,20 @@ class Decoder(nn.Module):
 
 # ---------------------- Vector Quantizer ----------------------
 class VectorQuantizer(nn.Module):
+    """
+    Vector quantization layer for discretizing latent embeddings.
+
+    Args:
+        num_embeddings (int): Number of embeddings in the codebook.
+        embedding_dim (int): Dimensionality of each embedding vector.
+        commitment_cost (float): Weight for the commitment loss term.
+    
+    Returns:
+        tuple:
+            quantized (Tensor): Quantized latent vectors.
+            loss (Tensor): VQ loss (quantization + commitment loss).
+            encoding_indices (Tensor): Indices of chosen embeddings in the codebook.
+    """
     def __init__(self, num_embeddings=512, embedding_dim=128, commitment_cost=0.25):
         super().__init__()
         self.num_embeddings = num_embeddings
@@ -119,6 +164,20 @@ class VectorQuantizer(nn.Module):
 
 # ------------------------ VQVAE2 ------------------------
 class VQVAE2(nn.Module):
+    """
+    VQ-VAE-2 model combining bottom and top-level encoders with vector quantization and a decoder.
+
+    Args:
+        latent_dim (int): Number of channels for the bottom-level latent representation.
+        num_embeddings (int): Number of embeddings in each VQ codebook.
+        commitment_cost (float): Weight for the commitment loss term in quantization.
+        output_channels (int): Number of output channels (default: 1 for grayscale images).
+    
+    Returns:
+        tuple:
+            x_recon (Tensor): Reconstructed image.
+            vq_loss (Tensor): Total vector quantization loss (top + bottom).
+    """
     def __init__(self, latent_dim=128, num_embeddings=512, commitment_cost=0.25, output_channels=1):
         super().__init__()
         # Bottom-level encoder

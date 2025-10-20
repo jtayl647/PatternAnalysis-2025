@@ -12,7 +12,16 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ---------------------- Utilities ----------------------
 def load_model(model_path, device):
-    """Load the trained VQVAE2 model from file."""
+    """
+    Load a trained VQVAE2 model from the given file path.
+
+    Args:
+        model_path (str): Path to the saved model (.pth file).
+        device (torch.device): Device to load the model onto (CPU or GPU).
+
+    Returns:
+        nn.Module: Loaded VQVAE2 model in evaluation mode.
+    """
     print("Loading model...")
     model = VQVAE2(latent_dim=256, num_embeddings=1024, commitment_cost=0.25, output_channels=1)
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -23,7 +32,16 @@ def load_model(model_path, device):
 
 
 def get_sample(base_path, device):
-    """Load one test sample from the dataset."""
+    """
+    Load a single test sample from the HipMRI dataset.
+
+    Args:
+        base_path (str): Path to the dataset directory.
+        device (torch.device): Device to move the sample to.
+
+    Returns:
+        Tensor: Single input sample ready for prediction.
+    """
     print("Loading data...")
     _, _, test_loader = load_our_data(base_path, batch_size=1, normImage=False)
     print("Test data loaded successfully.")
@@ -33,7 +51,16 @@ def get_sample(base_path, device):
 
 
 def predict_and_reconstruct(model, x):
-    """Run a forward pass and get reconstruction + latent indices."""
+    """
+    Perform a forward pass through the model to get reconstruction and optional latent indices.
+
+    Args:
+        model (nn.Module): Trained VQVAE2 model.
+        x (Tensor): Input batch/sample.
+
+    Returns:
+        Tuple[Tensor, Optional[Tensor]]: Reconstructed image and latent codebook indices (if available).
+    """
     with torch.no_grad():
         if hasattr(model, "encode") and hasattr(model, "decode"):
             z_e, z_q, indices = model.encode(x)
@@ -49,7 +76,15 @@ def predict_and_reconstruct(model, x):
 
 
 def save_visualizations(x, recon, indices, save_dir):
-    """Save original, reconstruction, and latent indices plots."""
+    """
+    Save visualizations of the original input, reconstruction, and optionally latent indices.
+
+    Args:
+        x (Tensor): Original input image.
+        recon (Tensor): Reconstructed output image.
+        indices (Optional[Tensor]): Latent codebook indices.
+        save_dir (str): Directory to save the figures.
+    """
     os.makedirs(save_dir, exist_ok=True)
 
     x_np = x.squeeze().cpu().numpy()
@@ -86,6 +121,9 @@ def save_visualizations(x, recon, indices, save_dir):
 
 # ---------------------- Main ----------------------
 def main():
+    """
+    Main script to load model, select a test sample, perform reconstruction, and save visualizations.
+    """
     model = load_model(MODEL_PATH, DEVICE)
     x = get_sample(BASE_PATH, DEVICE)
     recon, indices = predict_and_reconstruct(model, x)

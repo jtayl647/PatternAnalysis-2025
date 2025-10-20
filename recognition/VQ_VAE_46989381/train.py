@@ -15,12 +15,31 @@ os.makedirs(SAVE_DIR, exist_ok=True)  # create save directory if it doesn't exis
 
 # ---------------------- Utilities ----------------------
 def compute_metrics(x, recon):
-    """Compute MSE and SSIM for a batch (x and recon in [0,1])."""
+    """
+    Compute the Mean Squared Error (MSE) and Structural Similarity Index (SSIM) between 
+    the original and reconstructed images.
+
+    Args:
+        x (Tensor): Original input batch (range [0,1]).
+        recon (Tensor): Reconstructed batch (range [0,1]).
+
+    Returns:
+        tuple: MSE and SSIM values as floats.
+    """
     mse = nn.functional.mse_loss(recon, x)
     ssim = ssim_fn(recon, x)  # returns mean over batch
     return mse.item(), ssim.item()
 
 def plot_metrics(train_losses, val_losses, val_ssims, save_dir=SAVE_DIR):
+    """
+    Plot and save training and validation metrics (loss and SSIM) over epochs.
+
+    Args:
+        train_losses (list): Training loss per epoch.
+        val_losses (list): Validation loss per epoch.
+        val_ssims (list): Validation SSIM per epoch.
+        save_dir (str): Directory to save the plots (default: SAVE_DIR).
+    """
     plot_dir = os.path.join(save_dir, "plots")
     os.makedirs(plot_dir, exist_ok=True)
     epochs = range(1, len(train_losses)+1)
@@ -45,6 +64,17 @@ def plot_metrics(train_losses, val_losses, val_ssims, save_dir=SAVE_DIR):
 
 # ---------------------- Training ----------------------
 def train_one_epoch(model, loader, optimizer):
+    """
+    Perform a single training epoch over the given DataLoader.
+
+    Args:
+        model (nn.Module): VQ-VAE-2 model.
+        loader (DataLoader): Training data loader.
+        optimizer (torch.optim.Optimizer): Optimizer for model updates.
+
+    Returns:
+        float: Average training loss for the epoch.
+    """
     model.train()
     total_loss = 0.0
     mse_fn = nn.MSELoss()
@@ -59,6 +89,16 @@ def train_one_epoch(model, loader, optimizer):
     return total_loss / len(loader)
 
 def validate(model, loader):
+    """
+    Evaluate the model on the validation set.
+
+    Args:
+        model (nn.Module): VQ-VAE-2 model.
+        loader (DataLoader): Validation data loader.
+
+    Returns:
+        tuple: Average validation loss and average SSIM over the validation set.
+    """
     model.eval()
     total_loss, total_ssim = 0.0, 0.0
     mse_fn = nn.MSELoss()
@@ -72,6 +112,16 @@ def validate(model, loader):
     return total_loss / len(loader), total_ssim / len(loader)
 
 def test(model, loader):
+    """
+    Evaluate the model on the test set using SSIM.
+
+    Args:
+        model (nn.Module): VQ-VAE-2 model.
+        loader (DataLoader): Test data loader.
+
+    Returns:
+        float: Average SSIM over the test set.
+    """
     model.eval()
     total_ssim = 0.0
     with torch.no_grad():
@@ -84,6 +134,17 @@ def test(model, loader):
 
 # ---------------------- Main Script ----------------------
 def main():
+    """
+    Main training loop for the VQ-VAE-2 model.
+
+    Performs the following steps:
+        - Load the HipMRI dataset.
+        - Initialize the model, optimizer, and training parameters.
+        - Train the model for the specified number of epochs.
+        - Validate after each epoch and record metrics.
+        - Evaluate on the test set.
+        - Save the trained model and metric plots.
+    """
     batch_size = 32
     epochs = 80
     learning_rate = 1e-4
