@@ -50,6 +50,7 @@ The VQ-VAE-2 model consists of three main components:
    The decoder reconstructs the MRI slices from the quantized latent representations, using transposed convolutions to upsample back to the original resolution.
 
 ![Blocks Used (Encoder, Decoder and VQ)](images/block_diagram.png)
+
 *Figure 3: VQ-VAE-2 blocks used.*
 
 ### Residual Blocks
